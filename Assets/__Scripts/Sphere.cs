@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 public class Sphere : MonoBehaviour
@@ -26,8 +25,6 @@ public class Sphere : MonoBehaviour
     private Rigidbody rigidBody;
 
     //Allow for more precise movement with new Input System
-    private float moveX;
-    private float moveY;
     public float speed = 0.0f;
 
     /*
@@ -46,15 +43,6 @@ public class Sphere : MonoBehaviour
         displayTime();
     }
 
-    //Tracks and sets the user inputted movements
-    private void OnMove(InputValue input)
-    {
-        Vector2 movementVector = input.Get<Vector2>();
-
-        moveX = movementVector.x;
-        moveY = movementVector.y;
-    }
-
     /*
      * Adds a force to the ball based on the user input, and increments
      * the elapsed time every FixedUpdate (more frequent than Update),
@@ -65,9 +53,13 @@ public class Sphere : MonoBehaviour
     private Vector3 oldVelocity;
     private void FixedUpdate()
     {
-        Vector3 move = new Vector3(moveX, 0, moveY);
-        rigidBody.AddForce(move * speed);
+        float moveHorizontal = Input.GetAxis("Horizontal");
+        float moveVertical = Input.GetAxis("Vertical");
+        Vector3 move = new Vector3(moveHorizontal, 0.0f, moveVertical);
+
+        rigidBody.AddForce(move * speed * Time.deltaTime);
         oldVelocity = rigidBody.GetPointVelocity(rigidBody.position);
+
         if (timerIsRunning)
         {
             timer += Time.deltaTime;
@@ -90,7 +82,7 @@ public class Sphere : MonoBehaviour
         {
             string itemType = collision.gameObject.GetComponent<CollectableItems>().itemType;
             collectables.Add(itemType);
-            collision.gameObject.SetActive(false);
+            Destroy(collision.gameObject);
             switch (itemType)
             {
                 case "cube":
@@ -150,7 +142,7 @@ public class Sphere : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         ContactPoint cp = collision.contacts[0];
-        Vector3 reflectedVelocity = Vector3.Reflect(0.65f * oldVelocity, cp.normal);
+        Vector3 reflectedVelocity = Vector3.Reflect(0.50f * oldVelocity, cp.normal);
         rigidBody.velocity = reflectedVelocity;
 
         Quaternion rotation = Quaternion.FromToRotation(oldVelocity, reflectedVelocity);
